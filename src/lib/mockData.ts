@@ -56,15 +56,15 @@ export const launches: Launch[] = [
         scrubRisk: 10,
     },
     {
-        id: "artemis-iii",
-        missionName: "Artemis III",
+        id: "artemis-ii",
+        missionName: "Artemis II",
         rocket: "SLS Block 1",
         provider: "NASA",
-        date: "2026-09-01T12:00:00Z",
+        date: "2026-02-14T12:00:00Z", // Set to upcoming relative to Jan 2026
         launchSite: "KSC LC-39B, FL",
-        description: "The first crewed lunar landing mission since Apollo 17.",
+        description: "The first crewed flight test of the Space Launch System and Orion spacecraft around the Moon.",
         trajectory: "Easterly",
-        scrubRisk: 25,
+        scrubRisk: 15,
     }
 ];
 

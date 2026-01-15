@@ -8,9 +8,10 @@ interface LocationCardProps {
     score: number;
     travelTimeMinutes: number;
     isImpossible: boolean;
+    reasoning?: string;
 }
 
-export function LocationCard({ location, rank, score, travelTimeMinutes, isImpossible }: LocationCardProps) {
+export function LocationCard({ location, rank, score, travelTimeMinutes, isImpossible, reasoning }: LocationCardProps) {
     return (
         <div
             className={cn(
@@ -52,6 +53,12 @@ export function LocationCard({ location, rank, score, travelTimeMinutes, isImpos
                         <p className="text-muted-foreground flex items-center gap-2 text-sm mt-1">
                             <MapPin className="w-4 h-4" /> {location.distanceMiles} miles from launch pad ({location.azimuth}° Azimuth)
                         </p>
+                        {reasoning && (
+                            <div className="mt-2 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-sm text-blue-200">
+                                <span className="font-semibold text-blue-400 mr-1">AI Insight:</span>
+                                {reasoning}
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

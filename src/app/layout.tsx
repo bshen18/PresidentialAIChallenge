@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark"> {/* Default to dark mode for premium feel */}
+    <html lang="en" className="dark">
       <body className={cn(inter.className, "min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden")}>
         <Navbar />
         <div className="relative flex flex-col min-h-screen">

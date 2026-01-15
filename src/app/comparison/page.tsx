@@ -2,15 +2,15 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { launches, floridaLocations, calculateTravelTime, calculateScore, ViewingLocation, Launch } from "@/lib/mockData";
+import { floridaLocations, ViewingLocation, Launch } from "@/lib/mockData";
 import { LocationCard } from "@/components/LocationCard";
 import { Loader2, AlertCircle, ArrowLeft, RotateCcw, Info } from "lucide-react";
+import { getRankedLocationsAction, getLaunchDetailsAction } from "../actions";
+import { LocationAnalysis } from "@/lib/gemini";
 
 interface RankedLocation {
     location: ViewingLocation;
-    score: number;
-    travelTime: number;
-    isImpossible: boolean;
+    analysis: LocationAnalysis;
 }
 
 function ComparisonContent() {
@@ -31,39 +31,41 @@ function ComparisonContent() {
             return;
         }
 
-        const launch = launches.find(l => l.id === launchId);
-        setSelectedLaunch(launch);
+        async function fetchAnalysis() {
+            try {
+                // Parallel fetch details + analysis? 
+                // We need launch details for the UI header even if analysis handles it internally?
+                // Actually getRankedLocationsAction does NOT return launch details, it returns analysis.
+                // So we need to fetch details separately for the UI.
 
-        // Simulate AI Processing time
-        const timer = setTimeout(() => {
-            const results = floridaLocations.map(loc => {
-                const travelTime = calculateTravelTime(userLocation, loc.coordinates);
-                const score = calculateScore(loc, launch!);
+                const [launchDetails, analysisResults] = await Promise.all([
+                    getLaunchDetailsAction(launchId!),
+                    getRankedLocationsAction(userLocation!, launchId!)
+                ]);
 
-                // Mock impossibility: if travel > 2 hours? (Just logical mock)
-                // In real app compare to launch.date
-                const isImpossible = travelTime > 120; // Arbitrary threshold for demo
+                if (launchDetails) {
+                    setSelectedLaunch(launchDetails);
+                }
 
-                return {
-                    location: loc,
-                    score: isImpossible ? 0 : score,
-                    travelTime,
-                    isImpossible
-                };
-            });
+                // Map the results back to the full location object (since API returns IDs)
+                const mappedResults: RankedLocation[] = analysisResults.map(r => {
+                    const loc = floridaLocations.find(fl => fl.id === r.locationId);
+                    if (!loc) return null;
+                    return {
+                        location: loc,
+                        analysis: r
+                    };
+                }).filter((item): item is RankedLocation => item !== null);
 
-            // Sort: Impossible last, then by score descending
-            results.sort((a, b) => {
-                if (a.isImpossible && !b.isImpossible) return 1;
-                if (!a.isImpossible && b.isImpossible) return -1;
-                return b.score - a.score;
-            });
+                setRankedLocations(mappedResults);
+            } catch (error) {
+                console.error("Failed to fetch analysis:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
 
-            setRankedLocations(results);
-            setLoading(false);
-        }, 1500);
-
-        return () => clearTimeout(timer);
+        fetchAnalysis();
     }, [launchId, userLocation, router]);
 
     if (loading) {
@@ -106,9 +108,10 @@ function ComparisonContent() {
                         key={item.location.id}
                         location={item.location}
                         rank={index + 1}
-                        score={item.score}
-                        travelTimeMinutes={item.travelTime}
-                        isImpossible={item.isImpossible}
+                        score={item.analysis.score}
+                        travelTimeMinutes={item.analysis.travelTimeMinutes}
+                        isImpossible={item.analysis.isImpossible}
+                        reasoning={item.analysis.reasoning}
                     />
                 ))}
             </div>

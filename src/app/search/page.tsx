@@ -1,15 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ArrowRight, Rocket, MapPin, Calendar, AlertTriangle } from "lucide-react";
-import { launches } from "@/lib/mockData";
+import { Search, ArrowRight, Rocket, MapPin, Calendar, AlertTriangle, Loader2 } from "lucide-react";
+import { getUpcomingLaunchesAction } from "../actions";
+import { Launch } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 
 export default function SearchPage() {
     const router = useRouter();
     const [location, setLocation] = useState("");
     const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(null);
+    const [launches, setLaunches] = useState<Launch[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchLaunches() {
+            try {
+                const data = await getUpcomingLaunchesAction();
+                setLaunches(data);
+            } catch (err) {
+                console.error("Failed to fetch launches", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchLaunches();
+    }, []);
 
     const handleSearch = () => {
         if (!location || !selectedLaunchId) return;
@@ -71,44 +88,56 @@ export default function SearchPage() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {launches.map((launch, i) => (
-                        <div
-                            key={launch.id}
-                            onClick={() => setSelectedLaunchId(launch.id)}
-                            className={cn(
-                                "cursor-pointer group relative bg-card/30 backdrop-blur-md border rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02]",
-                                selectedLaunchId === launch.id
-                                    ? "border-blue-500 bg-blue-500/10 shadow-2xl shadow-blue-500/10"
-                                    : "border-white/5 hover:bg-card/50 hover:border-white/10"
-                            )}
-                            style={{ animationDelay: `${i * 100}ms` }}
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={cn(
-                                    "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold border",
-                                    selectedLaunchId === launch.id
-                                        ? "bg-blue-500 text-white border-blue-400"
-                                        : "bg-white/5 text-muted-foreground border-white/5"
-                                )}>
-                                    {launch.provider.charAt(0)}
-                                </div>
-                                {launch.scrubRisk > 20 && (
-                                    <div className="flex items-center gap-1 bg-orange-500/10 text-orange-400 px-2 py-1 rounded-lg text-xs font-medium border border-orange-500/20">
-                                        <AlertTriangle className="w-3 h-3" />
-                                        {launch.scrubRisk}% Risk
-                                    </div>
-                                )}
-                            </div>
-
-                            <h3 className="text-lg font-bold mb-1">{launch.missionName}</h3>
-                            <p className="text-sm text-foreground/70 mb-4">{launch.rocket}</p>
-
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-auto">
-                                <Calendar className="w-3 h-3" />
-                                {new Date(launch.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    {loading ? (
+                        <div className="col-span-3 flex justify-center py-12 text-muted-foreground">
+                            <div className="flex flex-col items-center gap-2">
+                                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                <p>Scanning 2026 Launch Manifest...</p>
                             </div>
                         </div>
-                    ))}
+                    ) : launches.length === 0 ? (
+                        <div className="col-span-3 text-center py-12 text-muted-foreground">
+                            No upcoming launches found.
+                        </div>
+                    ) : (
+                        launches.map((launch, i) => (
+                            <div
+                                key={launch.id}
+                                onClick={() => setSelectedLaunchId(launch.id)}
+                                className={cn(
+                                    "cursor-pointer group relative bg-card/30 backdrop-blur-md border rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02]",
+                                    selectedLaunchId === launch.id
+                                        ? "border-blue-500 bg-blue-500/10 shadow-2xl shadow-blue-500/10"
+                                        : "border-white/5 hover:bg-card/50 hover:border-white/10"
+                                )}
+                                style={{ animationDelay: `${i * 100}ms` }}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={cn(
+                                        "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold border",
+                                        selectedLaunchId === launch.id
+                                            ? "bg-blue-500 text-white border-blue-400"
+                                            : "bg-white/5 text-muted-foreground border-white/5"
+                                    )}>
+                                        {launch.provider.charAt(0)}
+                                    </div>
+                                    {launch.scrubRisk > 20 && (
+                                        <div className="flex items-center gap-1 bg-orange-500/10 text-orange-400 px-2 py-1 rounded-lg text-xs font-medium border border-orange-500/20">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            {launch.scrubRisk}% Risk
+                                        </div>
+                                    )}
+                                </div>
+
+                                <h3 className="text-lg font-bold mb-1 line-clamp-1">{launch.missionName}</h3>
+                                <p className="text-sm text-foreground/70 mb-4 line-clamp-1">{launch.rocket}</p>
+
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-auto">
+                                    <Calendar className="w-3 h-3" />
+                                    {new Date(launch.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </div>
+                            </div>
+                        )))}
                 </div>
             </div>
         </div>
