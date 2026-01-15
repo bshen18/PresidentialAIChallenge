@@ -22,12 +22,7 @@ export default function Home() {
           Start Searching
           <ArrowRight className="inline-block ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
-        <Link
-          href="/comparison"
-          className="px-8 py-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 transition-colors"
-        >
-          Compare Specs
-        </Link>
+
       </div>
     </main>
   );

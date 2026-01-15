@@ -23,8 +23,24 @@ export async function getRankedLocationsAction(
         throw new Error("Launch details not found");
     }
 
-    // Call Gemini API
-    const results = await generateLocationAnalysis(userLocation, launch, floridaLocations);
+    // 2. Fetch Weather for all candidates in parallel
+    // We import getWeatherForecast inside the function or file to use it
+    const { getWeatherForecast } = await import("@/lib/weather");
+
+    // We create a map of locationId -> Weather
+    const weatherMap = new Map();
+
+    // Process in parallel
+    await Promise.all(floridaLocations.map(async (loc) => {
+        const weather = await getWeatherForecast(loc.coordinates.lat, loc.coordinates.lng);
+        if (weather) {
+            weatherMap.set(loc.id, weather);
+        }
+    }));
+
+    // 3. Call Gemini API with weather context
+    // generateLocationAnalysis signature updated to accept weatherMap
+    const results = await generateLocationAnalysis(userLocation, launch, floridaLocations, weatherMap);
 
     // Sort: "Impossible" ones last, then by score descending
     return results.sort((a, b) => {

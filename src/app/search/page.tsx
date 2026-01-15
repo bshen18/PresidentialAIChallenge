@@ -130,7 +130,11 @@ export default function SearchPage() {
                                 </div>
 
                                 <h3 className="text-lg font-bold mb-1 line-clamp-1">{launch.missionName}</h3>
-                                <p className="text-sm text-foreground/70 mb-4 line-clamp-1">{launch.rocket}</p>
+                                <p className="text-sm text-foreground/70 mb-2 line-clamp-1">{launch.rocket}</p>
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
+                                    <MapPin className="w-3 h-3" />
+                                    {launch.launchSite}
+                                </div>
 
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-auto">
                                     <Calendar className="w-3 h-3" />

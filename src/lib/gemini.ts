@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Launch, ViewingLocation } from "./mockData";
+import { LocationWeather } from "./weather";
 
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
@@ -19,7 +20,8 @@ export interface LocationAnalysis {
 export async function generateLocationAnalysis(
     userLocation: string,
     launch: Launch,
-    candidates: ViewingLocation[]
+    candidates: ViewingLocation[],
+    weatherData: Map<string, LocationWeather | null> // Map locationId to its weather
 ): Promise<LocationAnalysis[]> {
     const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
@@ -42,15 +44,29 @@ export async function generateLocationAnalysis(
         },
     });
 
-    const candidateInfo = candidates.map(c => ({
-        id: c.id,
-        name: c.name,
-        coordinates: c.coordinates,
-        distanceFromPad: c.distanceMiles
-    }));
+    const candidateInfo = candidates.map(c => {
+        const weather = weatherData.get(c.id);
+        // Extract relevant current weather if available, or fall back to mock
+        const currentForecast = weather?.forecast[0];
+
+        return {
+            id: c.id,
+            name: c.name,
+            coordinates: c.coordinates,
+            distanceFromPad: c.distanceMiles,
+            elevation: c.elevation,
+            azimuthFromPad: c.azimuth, // 0=North, 90=East, 180=South, 270=West
+            currentWeather: currentForecast ? {
+                temperature: `${currentForecast.temperature}${currentForecast.temperatureUnit}`,
+                conditions: currentForecast.shortForecast,
+                wind: `${currentForecast.windSpeed} ${currentForecast.windDirection}`,
+                precipitationChance: currentForecast.probabilityOfPrecipitation.value ?? 0
+            } : c.weather // Fallback to mock if real fetch failed
+        };
+    });
 
     const prompt = `
-    Analyze viewing locations for a rocket launch.
+    Analyze viewing locations for a rocket launch considering Trajectory, Geography, and Weather.
     
     Context:
     - User Starting Location: "${userLocation}"
@@ -58,12 +74,32 @@ export async function generateLocationAnalysis(
     - Launch Site: "${launch.launchSite}"
     - Launch Date: "${launch.date}"
     - Trajectory: "${launch.trajectory}"
+    
+    Trajectory Guidance:
+    - "Easterly" (typical): Best viewed from North/South beaches. West is behind the pad (safe but potentially obstructed).
+    - "Southerly" (Polar): Best viewed from the South (e.g. Cocoa Beach) to see it go down range.
+    - "Polar": Similar to Southerly.
+
+    Geographical Nuances:
+    - Higher elevation is better for visibility.
+    - Over-water visibility is key for reflection and unobstructed views.
+    - "isImpossible": Mark TRUE if the location is strictly off-limits (which none of these are, but calculate travel time realistically).
+
+    Weather Impact:
+    - High Cloud Cover / Overcast = MAJOR penalty.
+    - Rain = Severe penalty (might scrub/no view).
+    - High Winds = Penalty (uncomfortable).
 
     Task:
-    For each candidate location, estimate the driving time from the user's location, calculate a 'viewing score' (0-100) based on visibility/distance/amenities, and determine if it is impossible to reach (isImpossible).
-    Also provide a short 'reasoning' string explaining the score.
+    For each candidate location, estimate the driving time from the user's location.
+    Calculate a 'viewing score' (0-100) combining:
+    1. Trajectory Alignment (is it a good angle?)
+    2. Visibility/Geography (Elevation, Line of Sight)
+    3. REAL WEATHER CONDITIONS (Crucial differentiator!)
+
+    Provide a 'reasoning' string explaining the score, explicitly mentioning weather conditions if they are a factor.
     
-    Candidate Locations:
+    Candidate Locations & Weather:
     ${JSON.stringify(candidateInfo, null, 2)}
     `;
 
