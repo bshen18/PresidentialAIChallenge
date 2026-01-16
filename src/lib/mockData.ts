@@ -8,6 +8,7 @@ export interface Launch {
     description: string;
     trajectory: "Easterly" | "Southerly" | "Polar";
     scrubRisk: number; // 0-100%
+    padCoordinates?: { lat: number; lng: number };
 }
 
 export interface WeatherData {

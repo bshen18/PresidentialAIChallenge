@@ -15,6 +15,8 @@ export interface LocationAnalysis {
     travelTimeMinutes: number;
     isImpossible: boolean;
     reasoning: string;
+    costEstimate: string;
+    viewingInstructions: string;
 }
 
 export async function generateLocationAnalysis(
@@ -37,8 +39,10 @@ export async function generateLocationAnalysis(
                         travelTimeMinutes: { type: SchemaType.NUMBER },
                         isImpossible: { type: SchemaType.BOOLEAN },
                         reasoning: { type: SchemaType.STRING },
+                        costEstimate: { type: SchemaType.STRING },
+                        viewingInstructions: { type: SchemaType.STRING },
                     },
-                    required: ["locationId", "score", "travelTimeMinutes", "isImpossible", "reasoning"],
+                    required: ["locationId", "score", "travelTimeMinutes", "isImpossible", "reasoning", "costEstimate", "viewingInstructions"],
                 },
             },
         },
@@ -96,8 +100,11 @@ export async function generateLocationAnalysis(
     1. Trajectory Alignment (is it a good angle?)
     2. Visibility/Geography (Elevation, Line of Sight)
     3. REAL WEATHER CONDITIONS (Crucial differentiator!)
+    4. Cost (Free vs Paid) - Prefer lower cost unless view is significantly better.
 
     Provide a 'reasoning' string explaining the score, explicitly mentioning weather conditions if they are a factor.
+    Provide 'costEstimate' as a short string (e.g. "Free", "$10 Parking", "$20 Entry + Gas").
+    Provide 'viewingInstructions' as a short specific directional instruction (e.g. "Look 45 deg East towards ocean", "Face South from the pier").
     
     Candidate Locations & Weather:
     ${JSON.stringify(candidateInfo, null, 2)}

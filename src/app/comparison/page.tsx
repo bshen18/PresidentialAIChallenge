@@ -47,15 +47,31 @@ function ComparisonContent() {
                     setSelectedLaunch(launchDetails);
                 }
 
-                // Map the results back to the full location object (since API returns IDs)
-                const mappedResults: RankedLocation[] = analysisResults.map(r => {
-                    const loc = floridaLocations.find(fl => fl.id === r.locationId);
-                    if (!loc) return null;
+                const rankedResults = analysisResults as unknown as RankedLocation[];
+
+                const mappedResults: RankedLocation[] = rankedResults.map(r => {
+                    // Client-side "Impossible" check
+                    let isImpossible = r.analysis.isImpossible;
+
+                    if (launchDetails) {
+                        const launchTime = new Date(launchDetails.date).getTime();
+                        const now = Date.now();
+                        const timeUntilLaunchMinutes = (launchTime - now) / (1000 * 60);
+
+                        // If travel time is longer than time until launch, it's impossible
+                        if (r.analysis.travelTimeMinutes > timeUntilLaunchMinutes && timeUntilLaunchMinutes > 0) {
+                            isImpossible = true;
+                        }
+                    }
+
                     return {
-                        location: loc,
-                        analysis: r
+                        ...r,
+                        analysis: {
+                            ...r.analysis,
+                            isImpossible
+                        }
                     };
-                }).filter((item): item is RankedLocation => item !== null);
+                });
 
                 setRankedLocations(mappedResults);
             } catch (error) {
@@ -102,6 +118,32 @@ function ComparisonContent() {
                 </div>
             </div>
 
+            {/* Scrub Risk / Viewability Warnings */}
+            {selectedLaunch && (
+                <div className="space-y-4 mb-8">
+                    {(selectedLaunch.scrubRisk > 50) && (
+                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
+                            <AlertCircle className="w-6 h-6 text-red-400" />
+                            <div>
+                                <h3 className="font-bold text-red-200">High Scrub Risk Detected ({selectedLaunch.scrubRisk}%)</h3>
+                                <p className="text-sm text-red-200/70">Weather or technical factors indicate a high chance this launch will be postponed. Check official sources before traveling.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {rankedLocations.every(l => l.analysis.score < 50) && (
+                        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center gap-3">
+                            <Info className="w-6 h-6 text-orange-400" />
+                            <div>
+                                <h3 className="font-bold text-orange-200">Poor Viewing Conditions</h3>
+                                <p className="text-sm text-orange-200/70">None of the locations look great for this specific launch trajectory and weather combo.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )
+            }
+
             <div className="grid gap-6">
                 {rankedLocations.map((item, index) => (
                     <LocationCard
@@ -112,6 +154,8 @@ function ComparisonContent() {
                         travelTimeMinutes={item.analysis.travelTimeMinutes}
                         isImpossible={item.analysis.isImpossible}
                         reasoning={item.analysis.reasoning}
+                        costEstimate={item.analysis.costEstimate}
+                        viewingInstructions={item.analysis.viewingInstructions}
                     />
                 ))}
             </div>

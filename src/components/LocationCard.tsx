@@ -9,9 +9,11 @@ interface LocationCardProps {
     travelTimeMinutes: number;
     isImpossible: boolean;
     reasoning?: string;
+    costEstimate?: string;
+    viewingInstructions?: string;
 }
 
-export function LocationCard({ location, rank, score, travelTimeMinutes, isImpossible, reasoning }: LocationCardProps) {
+export function LocationCard({ location, rank, score, travelTimeMinutes, isImpossible, reasoning, costEstimate, viewingInstructions }: LocationCardProps) {
     return (
         <div
             className={cn(
@@ -59,12 +61,18 @@ export function LocationCard({ location, rank, score, travelTimeMinutes, isImpos
                                 {reasoning}
                             </div>
                         )}
+                        {viewingInstructions && (
+                            <div className="mt-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-sm text-emerald-200">
+                                <span className="font-semibold text-emerald-400 mr-1">Pro Tip:</span>
+                                {viewingInstructions}
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Stat icon={<Car className="w-4 h-4" />} label="Travel Time" value={`${Math.floor(travelTimeMinutes / 60)}h ${travelTimeMinutes % 60}m`} subValue={isImpossible ? "Too late!" : "Traffic heavy"} alert={isImpossible} />
                         <Stat icon={<Cloud className="w-4 h-4" />} label="Weather" value={location.weather.condition} subValue={`${location.weather.cloudCover}% Cloud`} />
-                        <Stat icon={<DollarSign className="w-4 h-4" />} label="Total Cost" value={location.entryCost + location.parkingCost > 0 ? `$${location.entryCost + location.parkingCost}` : "Free"} subValue={location.parkingCost > 0 ? `$${location.parkingCost} parking` : undefined} />
+                        <Stat icon={<DollarSign className="w-4 h-4" />} label="Total Cost" value={costEstimate || (location.entryCost + location.parkingCost > 0 ? `$${location.entryCost + location.parkingCost}` : "Free")} />
                         <Stat icon={<Users className="w-4 h-4" />} label="Crowds" value={location.crowdLevel} />
                     </div>
                 </div>

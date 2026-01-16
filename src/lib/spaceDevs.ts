@@ -25,7 +25,9 @@ interface SpaceDevsLaunch {
         name: string;
         location: {
             name: string;
-        }
+        };
+        latitude: string;
+        longitude: string;
     };
     mission: {
         description: string;
@@ -66,7 +68,11 @@ export async function fetchRealUpcomingLaunches(): Promise<Launch[]> {
             description: l.mission?.description || "No description available.",
             // Simple logic for trajectory/scrub risk since API doesn't provide them directly
             trajectory: "Easterly",
-            scrubRisk: Math.floor(Math.random() * 30) // Still need to estimate this or ask Gemini to enrich
+            scrubRisk: Math.floor(Math.random() * 30), // Still need to estimate this or ask Gemini to enrich
+            padCoordinates: {
+                lat: parseFloat(l.pad.latitude),
+                lng: parseFloat(l.pad.longitude)
+            }
         }));
 
         upcomingCache = { data: mapped, timestamp: now };
@@ -104,7 +110,11 @@ export async function fetchRealLaunchDetails(id: string): Promise<Launch | null>
             launchSite: l.pad.location.name,
             description: l.mission?.description || "No description available.",
             trajectory: "Easterly",
-            scrubRisk: 10
+            scrubRisk: 10,
+            padCoordinates: {
+                lat: parseFloat(l.pad.latitude),
+                lng: parseFloat(l.pad.longitude)
+            }
         };
 
     } catch (error) {
