@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { floridaLocations, ViewingLocation, Launch } from "@/lib/mockData";
 import { LocationCard } from "@/components/LocationCard";
+import { LaunchComparison } from "@/components/LaunchComparison";
 import { Loader2, AlertCircle, ArrowLeft, RotateCcw, Info } from "lucide-react";
 import { getRankedLocationsAction, getLaunchDetailsAction } from "../actions";
 import { LocationAnalysis } from "@/lib/gemini";
@@ -18,6 +19,23 @@ function ComparisonContent() {
     const router = useRouter();
     const launchId = searchParams.get("launchId");
     const userLocation = searchParams.get("location");
+
+    // If no params, show Launch Comparison mode
+    if (!launchId && !userLocation) {
+        return <LaunchComparison />;
+    }
+
+    // Otherwise, show Location Analysis mode (existing functionality)
+    return <LocationAnalysisView launchId={launchId} userLocation={userLocation} router={router} />;
+}
+
+interface LocationAnalysisViewProps {
+    launchId: string | null;
+    userLocation: string | null;
+    router: any;
+}
+
+function LocationAnalysisView({ launchId, userLocation, router }: LocationAnalysisViewProps) {
 
     const [loading, setLoading] = useState(true);
     const [rankedLocations, setRankedLocations] = useState<RankedLocation[]>([]);
