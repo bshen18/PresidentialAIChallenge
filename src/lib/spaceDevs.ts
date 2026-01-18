@@ -13,6 +13,7 @@ interface SpaceDevsLaunch {
     net: string;
     window_start: string;
     window_end: string;
+    image: string | null;
     rocket: {
         configuration: {
             full_name: string;
@@ -72,7 +73,8 @@ export async function fetchRealUpcomingLaunches(): Promise<Launch[]> {
             padCoordinates: {
                 lat: parseFloat(l.pad.latitude),
                 lng: parseFloat(l.pad.longitude)
-            }
+            },
+            image: l.image
         }));
 
         upcomingCache = { data: mapped, timestamp: now };
@@ -114,7 +116,8 @@ export async function fetchRealLaunchDetails(id: string): Promise<Launch | null>
             padCoordinates: {
                 lat: parseFloat(l.pad.latitude),
                 lng: parseFloat(l.pad.longitude)
-            }
+            },
+            image: l.image
         };
 
     } catch (error) {

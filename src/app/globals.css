@@ -33,6 +33,16 @@
   --radius-sm: calc(var(--radius) - 4px);
 
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  /* Countdown animations */
+  @keyframes countdown-update {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+}
+
+.countdown-number {
+  animation: countdown-update 1s ease-in-out;
 }
 
 @utility container {

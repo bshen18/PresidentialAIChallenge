@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={cn(inter.className, "min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden")}>
+      <body suppressHydrationWarning className={cn(inter.className, "min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden")}>
         <Navbar />
         <div className="relative flex flex-col min-h-screen">
           {/* Background Gradients */}
