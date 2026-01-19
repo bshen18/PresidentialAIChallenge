@@ -59,23 +59,25 @@ export async function fetchRealUpcomingLaunches(): Promise<Launch[]> {
         const data = await response.json();
         const results = data.results as SpaceDevsLaunch[];
 
-        const mapped: Launch[] = results.map(l => ({
-            id: l.id,
-            missionName: l.name,
-            rocket: l.rocket.configuration.full_name,
-            provider: l.launch_service_provider.name,
-            date: l.net,
-            launchSite: l.pad.location.name,
-            description: l.mission?.description || "No description available.",
-            // Simple logic for trajectory/scrub risk since API doesn't provide them directly
-            trajectory: "Easterly",
-            scrubRisk: Math.floor(Math.random() * 30), // Still need to estimate this or ask Gemini to enrich
-            padCoordinates: {
-                lat: parseFloat(l.pad.latitude),
-                lng: parseFloat(l.pad.longitude)
-            },
-            image: l.image
-        }));
+        const mapped: Launch[] = results
+            .filter(l => new Date(l.net).getTime() > now)
+            .map(l => ({
+                id: l.id,
+                missionName: l.name,
+                rocket: l.rocket.configuration.full_name,
+                provider: l.launch_service_provider.name,
+                date: l.net,
+                launchSite: l.pad.location.name,
+                description: l.mission?.description || "No description available.",
+                // Simple logic for trajectory/scrub risk since API doesn't provide them directly
+                trajectory: "Easterly",
+                scrubRisk: Math.floor(Math.random() * 30), // Still need to estimate this or ask Gemini to enrich
+                padCoordinates: {
+                    lat: parseFloat(l.pad.latitude),
+                    lng: parseFloat(l.pad.longitude)
+                },
+                image: l.image
+            }));
 
         upcomingCache = { data: mapped, timestamp: now };
         return mapped;

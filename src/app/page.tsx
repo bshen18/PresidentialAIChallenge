@@ -18,7 +18,7 @@ export default function Home() {
             </h1>
           </div>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-lg mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            The next generation of space exploration and product discovery.
+            Witness the next launch from the perfect vantage point. AI-powered viewing guides tailored to trajectory and telemetry.
           </p>
           <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
             <Link

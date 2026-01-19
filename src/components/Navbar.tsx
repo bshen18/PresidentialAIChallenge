@@ -5,9 +5,6 @@ export function Navbar() {
     return (
         <nav className="fixed top-6 left-0 right-0 px-8 flex justify-between items-center z-50">
             <Link href="/" className="group flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-white font-bold text-xl">L</span>
-                </div>
                 <span className="text-xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
                     LUMINA
                 </span>

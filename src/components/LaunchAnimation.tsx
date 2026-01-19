@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function LaunchAnimation() {
     const [count, setCount] = useState(10);
     const [isFinished, setIsFinished] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
         if (!hasStarted) return;
@@ -17,9 +17,6 @@ export function LaunchAnimation() {
             return () => clearTimeout(timer);
         } else {
             setIsFinished(true);
-            if (videoRef.current) {
-                videoRef.current.play();
-            }
         }
     }, [count, hasStarted]);
 
@@ -30,32 +27,41 @@ export function LaunchAnimation() {
     return (
         <section className="relative w-full h-[600px] md:h-[800px] bg-black overflow-hidden flex items-center justify-center">
             {/* Background Video */}
-            <video
-                ref={videoRef}
-                className={cn(
-                    "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000",
-                    isFinished ? "opacity-100" : "opacity-30"
+            <div className={cn(
+                "absolute inset-0 w-full h-full transition-opacity duration-1000 overflow-hidden pointer-events-none bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/Artemis_I_Launch_Wide_Shot.jpg')] bg-cover bg-center",
+                isFinished ? "opacity-100" : "opacity-50"
+            )}>
+                <div className="absolute inset-0 bg-black/40" />
+                {hasStarted && (
+                    <iframe
+                        src={`https://www.youtube.com/embed/C3iHAgwIYtI?start=22&autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&mute=1&enablejsapi=1&playsinline=1`}
+                        className={cn(
+                            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full scale-[1.5] transition-opacity duration-1000",
+                            isReady ? "opacity-100" : "opacity-0"
+                        )}
+                        onLoad={() => setIsReady(true)}
+                        allow="autoplay; encrypted-media"
+                        title="Launch Video"
+                    />
                 )}
-                muted
-                playsInline
-                loop
-                poster="https://images-assets.nasa.gov/image/NHQ22111601/NHQ22111601~orig.jpg"
-            >
-                <source src="https://images-assets.nasa.gov/video/Artemis%20I%20Launch%20Highlights/Artemis%20I%20Launch%20Highlights~orig.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-            </video>
+            </div>
 
             {/* Retro Overlay */}
-            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+            <div className="absolute inset-0 bg-black/20 pointer-events-none" />
             <div className="absolute inset-0 border-[20px] border-white/5 pointer-events-none" />
 
             {!hasStarted ? (
-                <button
-                    onClick={handleStart}
-                    className="group relative px-12 py-6 bg-white text-black font-bold text-2xl rounded-none border-4 border-black shadow-[8px_8px_0_0_rgba(255,255,255,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_0_rgba(255,255,255,0.2)] transition-all active:scale-95 z-20"
-                >
-                    INITIATE LAUNCH SEQUENCE
-                </button>
+                <div className="relative z-20 flex flex-col items-center gap-6">
+                    <button
+                        onClick={handleStart}
+                        className="group relative px-12 py-6 bg-white text-black font-bold text-2xl rounded-none border-4 border-black shadow-[8px_8px_0_0_rgba(255,255,255,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_0_rgba(255,255,255,0.2)] transition-all active:scale-95"
+                    >
+                        INITIATE LAUNCH SEQUENCE
+                    </button>
+                    {!isReady && (
+                        <p className="text-white/40 font-mono text-xs animate-pulse">Establishing Satellite Uplink...</p>
+                    )}
+                </div>
             ) : !isFinished ? (
                 <div className="relative z-20 flex flex-col items-center">
                     {/* Retro Spinner/Countdown */}
@@ -75,7 +81,7 @@ export function LaunchAnimation() {
                     <h2 className="text-4xl md:text-6xl font-black text-white italic tracking-tighter uppercase drop-shadow-2xl">
                         LIFTOFF
                     </h2>
-                    <p className="text-white/60 font-mono mt-2">ARTEMIS I • NOVEMBER 16, 2022</p>
+                    <p className="text-white/60 font-mono mt-2">STARSHIP IFT-2 • NOVEMBER 18, 2023</p>
                 </div>
             )}
 
