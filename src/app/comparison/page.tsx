@@ -107,7 +107,7 @@ function LocationAnalysisView({ launchId, userLocation, router }: LocationAnalys
             <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
                 <p className="text-xl font-medium animate-pulse">Analyzing satellite imagery & traffic patterns...</p>
-                <div className="text-sm text-muted-foreground">Checking {floridaLocations.length} locations against trajectory...</div>
+                <div className="text-sm text-muted-foreground">Scanning global viewing databases...</div>
             </div>
         );
     }
