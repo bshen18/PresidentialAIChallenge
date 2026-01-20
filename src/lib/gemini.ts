@@ -206,3 +206,78 @@ export async function getLaunchDetails(id: string): Promise<Launch | null> {
         return null;
     }
 }
+
+export async function generateViewingLocations(
+    launchSite: string,
+    padLat: number,
+    padLng: number
+): Promise<ViewingLocation[]> {
+    const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: SchemaType.ARRAY,
+                items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        id: { type: SchemaType.STRING },
+                        name: { type: SchemaType.STRING },
+                        distanceMiles: { type: SchemaType.NUMBER },
+                        azimuth: { type: SchemaType.NUMBER },
+                        elevation: { type: SchemaType.STRING, enum: ["Low", "Medium", "High"], format: "enum" },
+                        amenities: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                        isProprietary: { type: SchemaType.BOOLEAN },
+                        parkingCost: { type: SchemaType.NUMBER },
+                        entryCost: { type: SchemaType.NUMBER },
+                        crowdLevel: { type: SchemaType.STRING, enum: ["Low", "Medium", "High", "Extreme"], format: "enum" },
+                        coordinates: {
+                            type: SchemaType.OBJECT,
+                            properties: {
+                                lat: { type: SchemaType.NUMBER },
+                                lng: { type: SchemaType.NUMBER },
+                            },
+                        },
+                    },
+                    required: ["id", "name", "distanceMiles", "azimuth", "elevation", "amenities", "isProprietary", "parkingCost", "entryCost", "crowdLevel", "coordinates"],
+                },
+            },
+        },
+    });
+
+    const prompt = `
+    Generate 6 distinct, REAL-WORLD viewing locations for a rocket launch from: "${launchSite}" (Coords: ${padLat}, ${padLng}).
+    
+    CRITICAL INSTRUCTION: All locations MUST be real, physical places that exist (Parks, Piers, Beaches, Causeways).
+    DO NOT fabricate locations. If you are unsure, stick to well-known public viewing areas.
+    
+    For each location:
+    1. Provide ACCURATE coordinates (Latitude/Longitude) - this is vital for weather checking.
+    2. Estimate distance and azimuth from the pad.
+    3. Include real amenities and cost estimates.
+    
+    Examples:
+    - KSC: Cocoa Beach Pier, Jetty Park, Playalinda Beach.
+    - Starbase: Isla Blanca Park, South Padre Island Beach.
+    - Vandenberg: Ocean Avenue (Lompoc), Surf Beach.
+    `;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const locations = JSON.parse(result.response.text()) as ViewingLocation[];
+
+        // Post-processing to ensure mock weather structure exists (it will be filled by real weather later)
+        return locations.map(loc => ({
+            ...loc,
+            weather: {
+                cloudCover: 0,
+                windSpeed: 0,
+                precipitationChance: 0,
+                condition: "Clear"
+            }
+        }));
+    } catch (error) {
+        console.error("Gemini Location Generation Failed:", error);
+        return [];
+    }
+}

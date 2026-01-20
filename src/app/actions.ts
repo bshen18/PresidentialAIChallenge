@@ -30,25 +30,21 @@ export async function getRankedLocationsAction(
     }
 
     // 2. Fetch/Determine Candidate Locations
-    // If we have pad coordinates, look for real places. Otherwise fallback to Florida mock.
+    // Use Gemini to generate versatile viewing locations based on the launch site
     let candidates: ViewingLocation[] = [];
-    if (launch.padCoordinates) {
-        candidates = await fetchNearbyViewingKeypoints(launch.padCoordinates.lat, launch.padCoordinates.lng);
-    }
 
-    // Fallback if no dynamic results found (e.g. API error or 0 results)
+    // We try to use the pad coordinates if available, otherwise just use the site name
+    const lat = launch.padCoordinates?.lat ?? 28.5721; // Default to KSC if missing
+    const lng = launch.padCoordinates?.lng ?? -80.6480;
+
+    const { generateViewingLocations } = await import("@/lib/gemini");
+    candidates = await generateViewingLocations(launch.launchSite, lat, lng);
+
+    // Fallback if Gemini failed (empty list)
     if (candidates.length === 0) {
-        // Only use florida fallback if it looks like a florida launch? Or just generic fallback?
-        // For now, let's just return empty or maybe keep florida as a safe backup if name contains "FL" or "Kennedy"
-        const isFlorida = launch.launchSite.includes("FL") || launch.launchSite.includes("Kennedy") || launch.launchSite.includes("Canaveral");
-        if (isFlorida) {
-            const { floridaLocations } = await import("@/lib/mockData");
-            candidates = floridaLocations;
-        } else {
-            // No candidates found for a non-FL launch
-            // We could return a generic error or empty list
-            // Let's rely on empty list for now, UI should handle it
-        }
+        console.warn("Gemini returned no locations, using Florida fallback.");
+        const { floridaLocations } = await import("@/lib/mockData");
+        candidates = floridaLocations;
     }
 
     // 3. Fetch Weather for all candidates in parallel
@@ -68,7 +64,22 @@ export async function getRankedLocationsAction(
 
     // 4. Call Gemini API with weather context
     // generateLocationAnalysis signature updated to accept weatherMap
-    const analysisResults = await generateLocationAnalysis(userLocation, launch, candidates, weatherMap);
+    let analysisResults: LocationAnalysis[] = [];
+    try {
+        analysisResults = await generateLocationAnalysis(userLocation, launch, candidates, weatherMap);
+    } catch (error) {
+        console.error("Gemini Analysis Failed, using fallback scoring:", error);
+        // Fallback: Generate simple analysis based on distance/weather
+        analysisResults = candidates.map(c => ({
+            locationId: c.id,
+            score: 70, // generic score
+            travelTimeMinutes: 60, // generic time
+            isImpossible: false,
+            reasoning: "AI Analysis unavailable. Location is viable based on standard metrics.",
+            costEstimate: c.entryCost + c.parkingCost > 0 ? `$${c.entryCost + c.parkingCost}` : "Free",
+            viewingInstructions: "Check local signage for specific viewing areas."
+        }));
+    }
 
     // 5. Combine and Sort
     const combined: RankedLocation[] = analysisResults.map(analysis => {
